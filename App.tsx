@@ -10,6 +10,7 @@ import { useAuthStore } from "./src/store/authStore"
 import AuthNavigator from "./src/navigation/AuthNavigator"
 import MainNavigator from "./src/navigation/MainNavigator"
 import { toastConfig } from "./src/utils/toastConfig"
+import "./global.css";
 
 const Stack = createStackNavigator()
 
@@ -19,8 +20,10 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true, // Add this line
+    shouldShowList: true, // Add this line
   }),
-})
+});
 
 export default function App() {
   const { isAuthenticated, initializeAuth } = useAuthStore()
