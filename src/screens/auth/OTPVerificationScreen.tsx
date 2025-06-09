@@ -28,7 +28,7 @@ export default function OTPVerificationScreen({ route, navigation }: any) {
 
         <View className="space-y-4">
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 text-base text-center text-2xl"
+            className="border border-gray-300 rounded-lg px-4 py-3 text-center text-2xl"
             placeholder="Enter OTP"
             value={otp}
             onChangeText={setOtp}
