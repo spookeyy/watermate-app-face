@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons"
 import * as Location from "expo-location"
 import Toast from "react-native-toast-message"
 import { useOrderStore } from "../../store/orderStore"
+import { pricePerLiter } from "../../constants/constant-variables"
 
 export default function OrderScreen({ navigation }: any) {
   const [quantity, setQuantity] = useState("10")
@@ -43,7 +44,6 @@ export default function OrderScreen({ navigation }: any) {
   }
 
   const calculateTotal = () => {
-    const pricePerLiter = 5 // KSh 5 per liter
     return Number.parseInt(quantity) * pricePerLiter
   }
 
@@ -206,7 +206,7 @@ export default function OrderScreen({ navigation }: any) {
         <View className="bg-white rounded-xl p-4 mb-6 shadow-sm">
           <Text className="text-lg font-semibold text-gray-800 mb-3">Order Summary</Text>
           <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-gray-600">{quantity} Liters × KSh 5</Text>
+            <Text className="text-gray-600">{quantity} Liters × KSh {pricePerLiter}</Text>
             <Text className="font-semibold text-gray-800">KSh {calculateTotal()}</Text>
           </View>
           <View className="border-t border-gray-200 pt-2 mt-2">
