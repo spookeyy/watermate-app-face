@@ -8,31 +8,55 @@ import { useAuthStore } from "../../store/authStore"
 import { useOrderStore } from "../../store/orderStore"
 
 export default function HomeScreen({ navigation }: any) {
-  const { user } = useAuthStore()
-  const { orders } = useOrderStore()
-  const [location, setLocation] = useState<Location.LocationObject | null>(null)
+  const { user } = useAuthStore();
+  const { orders } = useOrderStore();
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null
+  );
+  const [address, setAddress] = useState<string>("");
 
   useEffect(() => {
-    getCurrentLocation()
-  }, [])
+    getCurrentLocation();
+  }, []);
 
   const getCurrentLocation = async () => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync()
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        return
+        return;
       }
 
-      const location = await Location.getCurrentPositionAsync({})
-      setLocation(location)
+      const location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+
+      // Reverse geocode to get address
+      const addresses = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (addresses.length > 0) {
+        const firstAddress = addresses[0];
+        const addressParts = [
+          firstAddress?.name,
+          firstAddress?.street,
+          firstAddress?.city,
+          firstAddress?.region,
+          firstAddress?.country,
+        ].filter(Boolean); // Remove empty parts
+
+        setAddress(addressParts.join(", "));
+      }
     } catch (error) {
-      console.error("Error getting location:", error)
+      console.error("Error getting location:", error);
     }
-  }
+  };
 
-  const activeOrders = orders.filter((order) => ["pending", "accepted", "out_for_delivery"].includes(order.status))
+  const activeOrders = orders.filter((order) =>
+    ["pending", "accepted", "out_for_delivery"].includes(order.status)
+  );
 
-  const recentOrders = orders.slice(0, 3)
+  const recentOrders = orders.slice(0, 3);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -42,7 +66,9 @@ export default function HomeScreen({ navigation }: any) {
           <View className="flex-row items-center justify-between">
             <View>
               <Text className="text-white text-lg">Hello,</Text>
-              <Text className="text-white text-2xl font-bold">{user?.name}</Text>
+              <Text className="text-white text-2xl font-bold">
+                {user?.name}
+              </Text>
             </View>
             <TouchableOpacity className="bg-white/20 p-3 rounded-full">
               <Ionicons name="notifications" size={24} color="white" />
@@ -53,14 +79,18 @@ export default function HomeScreen({ navigation }: any) {
         {/* Quick Actions */}
         <View className="px-6 -mt-6">
           <View className="bg-white rounded-2xl p-6 shadow-sm">
-            <Text className="text-lg font-semibold text-gray-800 mb-4">Quick Order</Text>
+            <Text className="text-lg font-semibold text-gray-800 mb-4">
+              Quick Order
+            </Text>
             <View className="flex-row space-x-4">
               <TouchableOpacity
                 className="flex-1 bg-water-50 p-4 rounded-xl items-center"
                 onPress={() => navigation.navigate("Order")}
               >
                 <Ionicons name="water" size={32} color="#0ea5e9" />
-                <Text className="text-water-600 font-medium mt-2">Order Water</Text>
+                <Text className="text-water-600 font-medium mt-2">
+                  Order Water
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 bg-green-50 p-4 rounded-xl items-center"
@@ -76,25 +106,33 @@ export default function HomeScreen({ navigation }: any) {
         {/* Active Orders */}
         {activeOrders.length > 0 && (
           <View className="px-6 mt-6">
-            <Text className="text-lg font-semibold text-gray-800 mb-4">Active Orders</Text>
+            <Text className="text-lg font-semibold text-gray-800 mb-4">
+              Active Orders
+            </Text>
             {activeOrders.map((order) => (
               <TouchableOpacity
                 key={order.id}
                 className="bg-white rounded-xl p-4 mb-3 shadow-sm"
-                onPress={() => navigation.navigate("OrderDetails", { orderId: order.id })}
+                onPress={() =>
+                  navigation.navigate("OrderDetails", { orderId: order.id })
+                }
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1">
-                    <Text className="font-semibold text-gray-800">{order.quantity}L Water Delivery</Text>
-                    <Text className="text-gray-600 text-sm mt-1">{order.deliveryAddress.residenceName}</Text>
+                    <Text className="font-semibold text-gray-800">
+                      {order.quantity}L Water Delivery
+                    </Text>
+                    <Text className="text-gray-600 text-sm mt-1">
+                      {order.deliveryAddress.residenceName}
+                    </Text>
                     <View className="flex-row items-center mt-2">
                       <View
                         className={`px-2 py-1 rounded-full ${
                           order.status === "pending"
                             ? "bg-yellow-100"
                             : order.status === "accepted"
-                              ? "bg-blue-100"
-                              : "bg-green-100"
+                            ? "bg-blue-100"
+                            : "bg-green-100"
                         }`}
                       >
                         <Text
@@ -102,8 +140,8 @@ export default function HomeScreen({ navigation }: any) {
                             order.status === "pending"
                               ? "text-yellow-800"
                               : order.status === "accepted"
-                                ? "text-blue-800"
-                                : "text-green-800"
+                              ? "text-blue-800"
+                              : "text-green-800"
                           }`}
                         >
                           {order.status.replace("_", " ").toUpperCase()}
@@ -122,7 +160,9 @@ export default function HomeScreen({ navigation }: any) {
         {recentOrders.length > 0 && (
           <View className="px-6 mt-6">
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-lg font-semibold text-gray-800">Recent Orders</Text>
+              <Text className="text-lg font-semibold text-gray-800">
+                Recent Orders
+              </Text>
               <TouchableOpacity onPress={() => navigation.navigate("History")}>
                 <Text className="text-water-600 font-medium">View All</Text>
               </TouchableOpacity>
@@ -131,14 +171,22 @@ export default function HomeScreen({ navigation }: any) {
               <TouchableOpacity
                 key={order.id}
                 className="bg-white rounded-xl p-4 mb-3 shadow-sm"
-                onPress={() => navigation.navigate("OrderDetails", { orderId: order.id })}
+                onPress={() =>
+                  navigation.navigate("OrderDetails", { orderId: order.id })
+                }
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1">
-                    <Text className="font-semibold text-gray-800">{order.quantity}L Water</Text>
-                    <Text className="text-gray-600 text-sm">{order.createdAt.toLocaleDateString()}</Text>
+                    <Text className="font-semibold text-gray-800">
+                      {order.quantity}L Water
+                    </Text>
+                    <Text className="text-gray-600 text-sm">
+                      {order.createdAt.toLocaleDateString()}
+                    </Text>
                   </View>
-                  <Text className="text-gray-800 font-semibold">KSh {order.totalAmount}</Text>
+                  <Text className="text-gray-800 font-semibold">
+                    KSh {order.totalAmount}
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -151,15 +199,22 @@ export default function HomeScreen({ navigation }: any) {
             <View className="bg-white rounded-xl p-4 shadow-sm">
               <View className="flex-row items-center">
                 <Ionicons name="location" size={20} color="#0ea5e9" />
-                <Text className="text-gray-800 font-medium ml-2">Current Location</Text>
+                <Text className="text-gray-800 font-medium ml-2">
+                  Current Location
+                </Text>
               </View>
-              <Text className="text-gray-600 text-sm mt-1">
-                Lat: {location.coords.latitude.toFixed(4)}, Lng: {location.coords.longitude.toFixed(4)}
-              </Text>
+              {address ? (
+                <Text className="text-gray-600 text-sm mt-1">{address}</Text>
+              ) : (
+                <Text className="text-gray-600 text-sm mt-1">
+                  Lat: {location.coords.latitude.toFixed(4)}, Lng:{" "}
+                  {location.coords.longitude.toFixed(4)}
+                </Text>
+              )}
             </View>
           </View>
         )}
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
