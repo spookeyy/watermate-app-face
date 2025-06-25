@@ -70,7 +70,7 @@ export default function LoginScreen({ navigation }: any) {
           <View>
             <Text className="text-gray-700 mb-2 font-medium">Phone Number</Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
               placeholder="Enter your phone number"
               value={phoneNumber}
               onChangeText={setPhoneNumber}
@@ -83,7 +83,7 @@ export default function LoginScreen({ navigation }: any) {
             <View>
               <Text className="text-gray-700 mb-2 font-medium">OTP Code</Text>
               <TextInput
-                className="border border-gray-300 rounded-lg px-4 py-3 text-base"
+                className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
                 placeholder="Enter 6-digit OTP"
                 value={otp}
                 onChangeText={setOtp}
