@@ -7,7 +7,7 @@
       "noImplicitAny": true,
       "paths": {
         "nativewind": ["./node_modules/nativewind"]
-      }
+      },
     },
   "extends": "expo/tsconfig.base",
   "include": ["nativewind-env.d.ts", "**/*.ts", "**/*.tsx"]
