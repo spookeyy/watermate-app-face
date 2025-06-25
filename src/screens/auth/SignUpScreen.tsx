@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
@@ -61,7 +59,7 @@ export default function SignUpScreen({ navigation }: any) {
           <View>
             <Text className="text-gray-700 mb-2 font-medium">Full Name</Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-2"
               placeholder="Enter your full name"
               value={formData.name}
               onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
@@ -71,7 +69,7 @@ export default function SignUpScreen({ navigation }: any) {
           <View>
             <Text className="text-gray-700 mb-2 font-medium">Phone Number</Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
               placeholder="Enter your phone number"
               value={formData.phoneNumber}
               onChangeText={(text) => setFormData((prev) => ({ ...prev, phoneNumber: text }))}
