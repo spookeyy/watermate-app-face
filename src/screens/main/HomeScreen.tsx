@@ -1,11 +1,16 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import * as Location from "expo-location"
-import { useAuthStore } from "../../store/authStore"
-import { useOrderStore } from "../../store/orderStore"
+import { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { useAuthStore } from "../../store/authStore";
+import { useOrderStore } from "../../store/orderStore";
+// import { useOfflineSync } from "../../hooks/useOfflineSync";
 
 export default function HomeScreen({ navigation }: any) {
   const { user } = useAuthStore();
@@ -15,6 +20,8 @@ export default function HomeScreen({ navigation }: any) {
   );
   const [address, setAddress] = useState<string>("");
 
+  // const { isOnline, isSyncing, pendingSync, forceSync } = useOfflineSync();
+
   useEffect(() => {
     getCurrentLocation();
   }, []);
@@ -22,14 +29,11 @@ export default function HomeScreen({ navigation }: any) {
   const getCurrentLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        return;
-      }
+      if (status !== "granted") return;
 
       const location = await Location.getCurrentPositionAsync({});
       setLocation(location);
 
-      // Reverse geocode to get address
       const addresses = await Location.reverseGeocodeAsync({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -43,8 +47,7 @@ export default function HomeScreen({ navigation }: any) {
           firstAddress?.city,
           firstAddress?.region,
           firstAddress?.country,
-        ].filter(Boolean); // Remove empty parts
-
+        ].filter(Boolean);
         setAddress(addressParts.join(", "));
       }
     } catch (error) {
@@ -63,21 +66,42 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView className="flex-1">
         {/* Header */}
         <View className="bg-water-500 px-6 py-8 rounded-b-3xl">
-          <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center justify-between mb-8">
             <View>
-              <Text className="text-white text-lg">Hello,</Text>
+              <Text className="text-white text-lg mt-6">Hello,</Text>
               <Text className="text-white text-2xl font-bold">
                 {user?.name}
               </Text>
             </View>
-            <TouchableOpacity className="bg-white/20 p-3 rounded-full">
+            <TouchableOpacity className="bg-white/20 p-3 rounded-full mt-6">
               <Ionicons name="notifications" size={24} color="white" />
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* Sync Status */}
+        {/* <View className="px-6 mt-4">
+          {!isOnline && (
+            <Text className="text-red-600 text-sm font-medium">
+              You're offline. Changes will sync once you're back online.
+            </Text>
+          )}
+          {isSyncing && (
+            <Text className="text-blue-600 text-sm font-medium">
+              Syncing your data...
+            </Text>
+          )}
+          {!isSyncing && pendingSync > 0 && (
+            <TouchableOpacity onPress={forceSync}>
+              <Text className="text-orange-600 text-sm font-medium">
+                {pendingSync} pending changes. Tap to sync now.
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View> */}
+
         {/* Quick Actions */}
-        <View className="px-6 -mt-6">
+        <View className="px-6 -mt-8">
           <View className="bg-white rounded-2xl p-6 shadow-sm">
             <Text className="text-lg font-semibold text-gray-800 mb-4">
               Quick Order
