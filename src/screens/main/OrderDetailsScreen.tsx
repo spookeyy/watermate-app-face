@@ -7,13 +7,18 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
   const { getOrderById } = useOrderStore()
   const order = getOrderById(orderId)
 
-  if (!order) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center">
-        <Text className="text-gray-500 text-lg">Order not found</Text>
-      </SafeAreaView>
-    )
-  }
+  const handleReorder = () => {
+    if (!order) return;
+
+    // navigate to the orderscreen with prev order's details as params
+    navigation.navigate("Order", {
+      reorderData: {
+        quantity: order.quantity.toString(),
+        deliveryAddress: order.deliveryAddress,
+        paymentMethod: order.paymentMethod
+      }
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -49,22 +54,32 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     }
   }
 
+  if (!order) return (
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <ScrollView className="flex-1 px-6 py-4">
+        <View className="bg-white rounded-xl p-6 mb-4 shadow-sm items-center">
+          <Text className="text-2xl font-bold text-gray-800 mt-4">Order not found</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  )
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView className="flex-1 px-6 py-4">
         {/* Order Status */}
         <View className="bg-white rounded-xl p-6 mb-4 shadow-sm items-center">
           <Ionicons
-            name={getStatusIcon(order.status)}
+            name={getStatusIcon(order?.status)}
             size={64}
-            color={order.status === "delivered" ? "#10b981" : "#0ea5e9"}
+            color={order?.status === "delivered" ? "#10b981" : "#0ea5e9"}
           />
-          <Text className="text-2xl font-bold text-gray-800 mt-4">Order #{order.id.slice(-6)}</Text>
-          <View className={`px-4 py-2 rounded-full mt-2 ${getStatusColor(order.status)}`}>
-            <Text className="font-semibold">{order.status.replace("_", " ").toUpperCase()}</Text>
+          <Text className="text-2xl font-bold text-gray-800 mt-4">Order #{order?.id.slice(-6)}</Text>
+          <View className={`px-4 py-2 rounded-full mt-2 ${getStatusColor(order?.status)}`}>
+            <Text className="font-semibold">{order?.status.replace("_", " ").toUpperCase()}</Text>
           </View>
           <Text className="text-gray-600 mt-2">
-            Placed on {order.createdAt.toLocaleDateString()} at {order.createdAt.toLocaleTimeString()}
+            Placed on {order?.createdAt.toLocaleDateString()} at {order?.createdAt.toLocaleTimeString()}
           </Text>
         </View>
 
@@ -74,16 +89,16 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
           <View className="space-y-3">
             <View className="flex-row justify-between">
               <Text className="text-gray-600">Quantity</Text>
-              <Text className="font-semibold text-gray-800">{order.quantity} Liters</Text>
+              <Text className="font-semibold text-gray-800">{order?.quantity} Liters</Text>
             </View>
             <View className="flex-row justify-between">
               <Text className="text-gray-600">Total Amount</Text>
-              <Text className="font-semibold text-gray-800">KSh {order.totalAmount}</Text>
+              <Text className="font-semibold text-gray-800">KSh {order?.totalAmount}</Text>
             </View>
             <View className="flex-row justify-between">
               <Text className="text-gray-600">Payment Method</Text>
               <Text className="font-semibold text-gray-800">
-                {order.paymentMethod === "mpesa" ? "M-PESA" : "Cash on Delivery"}
+                {order?.paymentMethod === "mpesa" ? "M-PESA" : "Cash on Delivery"}
               </Text>
             </View>
           </View>
@@ -95,20 +110,20 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
           <View className="space-y-2">
             <View className="flex-row items-center">
               <Ionicons name="business" size={16} color="#6b7280" />
-              <Text className="text-gray-800 ml-2">{order.deliveryAddress.residenceName}</Text>
+              <Text className="text-gray-800 ml-2">{order?.deliveryAddress.residenceName}</Text>
             </View>
             <View className="flex-row items-center">
               <Ionicons name="layers" size={16} color="#6b7280" />
-              <Text className="text-gray-800 ml-2">Floor {order.deliveryAddress.floorNumber}</Text>
+              <Text className="text-gray-800 ml-2">Floor {order?.deliveryAddress.floorNumber}</Text>
             </View>
             <View className="flex-row items-center">
               <Ionicons name="home" size={16} color="#6b7280" />
-              <Text className="text-gray-800 ml-2">Door {order.deliveryAddress.doorNumber}</Text>
+              <Text className="text-gray-800 ml-2">Door {order?.deliveryAddress.doorNumber}</Text>
             </View>
-            {order.deliveryAddress.notes && (
+            {order?.deliveryAddress.notes && (
               <View className="flex-row items-start">
                 <Ionicons name="document-text" size={16} color="#6b7280" />
-                <Text className="text-gray-800 ml-2 flex-1">{order.deliveryAddress.notes}</Text>
+                <Text className="text-gray-800 ml-2 flex-1">{order?.deliveryAddress.notes}</Text>
               </View>
             )}
           </View>
@@ -122,11 +137,11 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
               <View className="w-3 h-3 bg-green-500 rounded-full mr-3" />
               <View className="flex-1">
                 <Text className="font-medium text-gray-800">Order Placed</Text>
-                <Text className="text-gray-600 text-sm">{order.createdAt.toLocaleString()}</Text>
+                <Text className="text-gray-600 text-sm">{order?.createdAt.toLocaleString()}</Text>
               </View>
             </View>
 
-            {["accepted", "out_for_delivery", "delivered"].includes(order.status) && (
+            {["accepted", "out_for_delivery", "delivered"].includes(order?.status) && (
               <View className="flex-row items-center">
                 <View className="w-3 h-3 bg-green-500 rounded-full mr-3" />
                 <View className="flex-1">
@@ -136,7 +151,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
               </View>
             )}
 
-            {["out_for_delivery", "delivered"].includes(order.status) && (
+            {["out_for_delivery", "delivered"].includes(order?.status) && (
               <View className="flex-row items-center">
                 <View className="w-3 h-3 bg-green-500 rounded-full mr-3" />
                 <View className="flex-1">
@@ -146,17 +161,17 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
               </View>
             )}
 
-            {order.status === "delivered" && (
+            {order?.status === "delivered" && (
               <View className="flex-row items-center">
                 <View className="w-3 h-3 bg-green-500 rounded-full mr-3" />
                 <View className="flex-1">
                   <Text className="font-medium text-gray-800">Delivered</Text>
-                  <Text className="text-gray-600 text-sm">{order.deliveredAt?.toLocaleString()}</Text>
+                  <Text className="text-gray-600 text-sm">{order?.deliveredAt?.toLocaleString()}</Text>
                 </View>
               </View>
             )}
 
-            {order.status === "pending" && (
+            {order?.status === "pending" && (
               <View className="flex-row items-center">
                 <View className="w-3 h-3 bg-gray-300 rounded-full mr-3" />
                 <View className="flex-1">
@@ -170,40 +185,41 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
 
         {/* Action Buttons */}
         <View className="space-y-3 mb-6">
-          {order.status === "out_for_delivery" && (
+          {order?.status === "out_for_delivery" && (
             <TouchableOpacity
               className="bg-water-500 rounded-xl py-4 items-center"
-              onPress={() => navigation.navigate("Tracking", { orderId: order.id })}
+              onPress={() => navigation.navigate("Tracking", { orderId: order?.id })}
             >
               <Text className="text-white font-semibold text-lg">Track Delivery</Text>
             </TouchableOpacity>
           )}
 
-          {order.status === "delivered" && !order.rating && (
+          {order?.status === "delivered" && !order?.rating && (
             <TouchableOpacity
               className="bg-yellow-500 rounded-xl py-4 items-center"
-              onPress={() => navigation.navigate("Review", { orderId: order.id })}
+              onPress={() => navigation.navigate("Review", { orderId: order?.id })}
             >
               <Text className="text-white font-semibold text-lg">Rate & Review</Text>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity className="border border-water-500 rounded-xl py-4 items-center">
+          <TouchableOpacity className="border border-water-500 rounded-xl py-4 items-center"
+          onPress={handleReorder}>
             <Text className="text-water-600 font-semibold text-lg">Reorder</Text>
           </TouchableOpacity>
         </View>
 
         {/* Rating & Review */}
-        {order.rating && (
+        {order?.rating && (
           <View className="bg-white rounded-xl p-4 mb-4 shadow-sm">
             <Text className="text-lg font-semibold text-gray-800 mb-3">Your Review</Text>
             <View className="flex-row items-center mb-2">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Ionicons key={star} name={star <= order.rating! ? "star" : "star-outline"} size={20} color="#fbbf24" />
+                <Ionicons key={star} name={star <= order?.rating! ? "star" : "star-outline"} size={20} color="#fbbf24" />
               ))}
-              <Text className="text-gray-600 ml-2">({order.rating}/5)</Text>
+              <Text className="text-gray-600 ml-2">({order?.rating}/5)</Text>
             </View>
-            {order.review && <Text className="text-gray-700">{order.review}</Text>}
+            {order?.review && <Text className="text-gray-700">{order?.review}</Text>}
           </View>
         )}
       </ScrollView>

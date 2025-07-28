@@ -11,8 +11,40 @@ import PaymentScreen from "../screens/main/PaymentScreen";
 import TrackingScreen from "../screens/main/TrackingScreen";
 import ReviewScreen from "../screens/main/ReviewScreen";
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+// Define your navigation types
+export type TabParamList = {
+  Home: undefined;
+  Order:
+    | {
+        reorderData?: {
+          quantity: string;
+          deliveryAddress: {
+            residenceName: string;
+            floorNumber: string;
+            doorNumber: string;
+            notes?: string;
+          };
+          paymentMethod: "mpesa" | "cash";
+        };
+      }
+    | undefined;
+  OrderHistory: undefined;
+  Profile: undefined;
+};
+
+export type MainStackParamList = {
+  MainTabs: undefined;
+  OrderDetails: { orderId: string };
+  Payment: { orderId: string };
+  Tracking: { orderId: string };
+  Review: { orderId: string };
+};
+
+// const Tab = createBottomTabNavigator();
+// const Stack = createStackNavigator();
+
+const Tab = createBottomTabNavigator<TabParamList>();
+const Stack = createStackNavigator<MainStackParamList>();
 
 function TabNavigator() {
   return (
@@ -25,7 +57,7 @@ function TabNavigator() {
             iconName = focused ? "home" : "home-outline";
           } else if (route.name === "Order") {
             iconName = focused ? "water" : "water-outline";
-          } else if (route.name === "History") {
+          } else if (route.name === "OrderHistory") {
             iconName = focused ? "time" : "time-outline";
           } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
@@ -71,7 +103,7 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen
-        name="History"
+        name="OrderHistory"
         component={OrderHistoryScreen}
         options={{
           tabBarLabel: "History",

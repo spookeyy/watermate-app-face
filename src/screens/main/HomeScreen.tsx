@@ -35,11 +35,11 @@ export default function HomeScreen({ navigation }: any) {
       setLocation(location);
 
       const addresses = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: location?.coords.latitude,
+        longitude: location?.coords.longitude,
       });
 
-      if (addresses.length > 0) {
+      if (addresses?.length > 0) {
         const firstAddress = addresses[0];
         const addressParts = [
           firstAddress?.name,
@@ -118,7 +118,7 @@ export default function HomeScreen({ navigation }: any) {
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 bg-green-50 p-4 rounded-xl items-center"
-                onPress={() => navigation.navigate("History")}
+                onPress={() => navigation.navigate("OrderHistory")}
               >
                 <Ionicons name="time" size={32} color="#10b981" />
                 <Text className="text-green-600 font-medium mt-2">Reorder</Text>

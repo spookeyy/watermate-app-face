@@ -11,11 +11,30 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useOrderStore } from "../../store/orderStore";
 import Toast from "react-native-toast-message";
+import { useNavigation } from "@react-navigation/native";
+import type { CompositeNavigationProp } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-export default function OrderHistoryScreen({ navigation }: any) {
+// Import the types from your MainNavigator
+import type {
+  TabParamList,
+  MainStackParamList,
+} from "../../navigation/MainNavigator";
+
+// Composite navigation type for tab + stack navigation
+type OrderHistoryScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, "OrderHistory">,
+  NativeStackNavigationProp<MainStackParamList>
+>;
+
+export default function OrderHistoryScreen() {
+  const navigation = useNavigation<OrderHistoryScreenNavigationProp>();
   const { orders, fetchOrders } = useOrderStore();
   const [filter, setFilter] = useState<"all" | "delivered" | "pending">("all");
   const [refreshing, setRefreshing] = useState(false);
+
+  const { getOrderById } = useOrderStore();
 
   const filteredOrders = orders.filter((order) => {
     if (filter === "all") return true;
@@ -45,6 +64,21 @@ export default function OrderHistoryScreen({ navigation }: any) {
       setRefreshing(false);
     }
   }, [fetchOrders]);
+
+  const handleReorder = (orderId: string) => {
+    if (!orderId) return;
+    const order = getOrderById(orderId);
+    if (!order) return;
+
+    // navigate to the orderscreen with prev order's details as params
+    navigation.navigate("Order", {
+      reorderData: {
+        quantity: order.quantity.toString(),
+        deliveryAddress: order.deliveryAddress,
+        paymentMethod: order.paymentMethod,
+      },
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -103,7 +137,6 @@ export default function OrderHistoryScreen({ navigation }: any) {
               />
             </TouchableOpacity>
           </View>
-
           {/* Enhanced Filter Tabs */}
           <View className="flex-row bg-gray-50 rounded-xl p-1">
             {[
@@ -126,7 +159,9 @@ export default function OrderHistoryScreen({ navigation }: any) {
                     ? "bg-white shadow-sm border border-blue-100"
                     : ""
                 }`}
-                onPress={() => setFilter(tab.key as any)}
+                onPress={() =>
+                  setFilter(tab.key as "all" | "delivered" | "pending")
+                } // Simplified
               >
                 <View className="items-center">
                   <Text
@@ -309,7 +344,8 @@ export default function OrderHistoryScreen({ navigation }: any) {
                           </TouchableOpacity>
                         )}
 
-                        <TouchableOpacity className="bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg">
+                        <TouchableOpacity className="bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg"
+                          onPress={() => handleReorder(order.id)}>
                           <Text className="text-gray-700 text-xs font-semibold">
                             Reorder
                           </Text>
@@ -345,8 +381,8 @@ export default function OrderHistoryScreen({ navigation }: any) {
                 ))}
               </View>
             )}
-            </View>
-          </ScrollView>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </>
   );

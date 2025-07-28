@@ -31,7 +31,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // Start with loading true
 
   login: async (phoneNumber: string, otp: string) => {
     set({ isLoading: true });
@@ -76,28 +76,50 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    await AsyncStorage.removeItem("user");
-    set({ user: null, isAuthenticated: false });
+    set({ isLoading: true });
+    try {
+      await AsyncStorage.removeItem("user");
+      set({ user: null, isAuthenticated: false, isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      console.error("Error during logout:", error);
+    }
   },
 
   initializeAuth: async () => {
+    set({ isLoading: true });
     try {
-      const userData = await AsyncStorage.getItem("user");
+      // Add a minimum delay to ensure splash screen shows properly
+      const [userData] = await Promise.all([
+        AsyncStorage.getItem("user"),
+        new Promise((resolve) => setTimeout(resolve, 10000)), // Minimum 1 second delay
+      ]);
+
       if (userData) {
         const user = JSON.parse(userData);
-        set({ user, isAuthenticated: true });
+        set({ user, isAuthenticated: true, isLoading: false });
+      } else {
+        set({ user: null, isAuthenticated: false, isLoading: false });
       }
     } catch (error) {
       console.error("Error initializing auth:", error);
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
   updateProfile: async (userData: Partial<User>) => {
     const currentUser = get().user;
     if (currentUser) {
-      const updatedUser = { ...currentUser, ...userData };
-      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
-      set({ user: updatedUser });
+      set({ isLoading: true });
+      try {
+        const updatedUser = { ...currentUser, ...userData };
+        await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+        set({ user: updatedUser, isLoading: false });
+      } catch (error) {
+        set({ isLoading: false });
+        console.error("Error updating profile:", error);
+        throw error;
+      }
     }
   },
 }));

@@ -8,8 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
-  Animated,
-  ActivityIndicator
+  Animated
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
@@ -30,10 +29,9 @@ export default function OrderScreen({ navigation, route }: any) {
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null
   );
-  const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(true);
   const [isReorder, setIsReorder] = useState(false);
-  const { createOrder, isLoading, updateTrackingLocation } = useOrderStore();
+  const { createOrder, isLoading } = useOrderStore();
 
   // Animation for reorder banner
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -74,23 +72,6 @@ export default function OrderScreen({ navigation, route }: any) {
       setIsButtonEnabled(true);
     }, [])
   );
-
-  useEffect(() => {
-    if (!isReorder) {
-      setQuantity("10");
-      setDeliveryAddress({
-        residenceName: "",
-        floorNumber: "",
-        doorNumber: "",
-        notes: "",
-      });
-      setPaymentMethod("mpesa");
-
-      // Also reset the animation
-      fadeAnim.setValue(0);
-    }
-  }, [isReorder, fadeAnim]);
-
 
   const getCurrentLocation = async () => {
     try {
@@ -143,27 +124,12 @@ export default function OrderScreen({ navigation, route }: any) {
     try {
       setIsButtonEnabled(false);
 
-      const newOrderId = Date.now().toString();
       await createOrder({
         quantity: Number.parseInt(quantity),
         deliveryAddress,
         paymentMethod,
         totalAmount: calculateTotal(),
       });
-
-      if (location) {
-        try {
-          await Promise.race([
-            updateTrackingLocation(newOrderId, {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            }),
-            new Promise((resolve) => setTimeout(resolve, 2000)), // 2 second timeout
-          ]);
-        } catch (e) {
-          console.warn("Location update took too long");
-        }
-      }
 
       Toast.show({
         type: "success",
@@ -187,52 +153,6 @@ export default function OrderScreen({ navigation, route }: any) {
     }
   };
 
-  const handleUpdateLocation = async () => {
-    setIsUpdatingLocation(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") throw new Error("Permission denied");
-
-      const location = await Location.getCurrentPositionAsync({});
-      const addresses = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      if (addresses.length > 0) {
-        const address = addresses[0];
-        setDeliveryAddress((prev) => ({
-          ...prev,
-          // Prefill but keep editable
-          residenceName:
-            prev.residenceName ||
-            address?.name ||
-            `${address?.street || "Unknown location"}`,
-          // Add GPS coordinates to notes for rider reference
-          notes: `${prev.notes ? prev.notes + "\n\n" : ""}GPS: ${
-            location.coords.latitude
-          },${location.coords.longitude}`,
-        }));
-
-        Toast.show({
-          type: "info",
-          text1: "Verify Your Address",
-          text2:
-            "We've prefilled your location - please confirm or edit the exact building name",
-        });
-      }
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Location Update",
-        text2:
-          "We got your coordinates but please manually enter your building name",
-      });
-    } finally {
-      setIsUpdatingLocation(false);
-    }
-  };
-
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
@@ -241,7 +161,7 @@ export default function OrderScreen({ navigation, route }: any) {
       {isReorder && (
         <Animated.View
           style={{ opacity: fadeAnim }}
-          className="bg-bluw-100 px-6 py-3 border-b border-blue-200 flex-row items-center mt-10"
+          className="bg-bluw-100 px-6 py-3 border-b border-blue-200 flex-row items-center"
         >
           <Ionicons name="refresh-circle" size={20} color="#0ea5e9" />
           <Text className="text-blue-800 font-medium ml-2 flex-1">
@@ -270,16 +190,8 @@ export default function OrderScreen({ navigation, route }: any) {
                 : "Fresh water delivered to your door"}
             </Text>
           </View>
-          <View
-            className={`p-3 rounded-full ${
-              isReorder ? "bg-blue-100" : "bg-blue-50"
-            }`}
-          >
-            <Ionicons
-              name="water"
-              size={24}
-              color={isReorder ? "#0284c7" : "#0ea5e9"}
-            />
+          <View className="bg-blue-50 p-3 rounded-full">
+            <Ionicons name="water" size={24} color="#0ea5e9" />
           </View>
         </View>
       </View>
@@ -290,23 +202,15 @@ export default function OrderScreen({ navigation, route }: any) {
           {/* Quantity Selection */}
           <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <View className="flex-row items-center mb-4">
-              <View
-                className={`p-2 rounded-lg mr-3 ${
-                  isReorder ? "bg-blue-100" : "bg-blue-50"
-                }`}
-              >
-                <Ionicons
-                  name="water-outline"
-                  size={20}
-                  color={isReorder ? "#0284c7" : "#0ea5e9"}
-                />
+              <View className="bg-blue-100 p-2 rounded-lg mr-3">
+                <Ionicons name="water-outline" size={20} color="#0ea5e9" />
               </View>
               <Text className="text-lg font-semibold text-gray-900">
                 Water Quantity
               </Text>
             </View>
             {isReorder && (
-              <View className="bg-blue-50 px-2 py-1 rounded-full mt-[-4px] mb-2">
+              <View className="bg-blue-50 px-2 py-1 rounded-full">
                 <Text className="text-blue-700 text-xs font-medium">
                   FROM PREVIOUS ORDER
                 </Text>
@@ -315,29 +219,19 @@ export default function OrderScreen({ navigation, route }: any) {
 
             <View className="flex-row items-center justify-between">
               <TouchableOpacity
-                className={`p-4 rounded-xl ${
-                  isReorder ? "bg-blue-100" : "bg-gray-100"
-                } active:opacity-70`}
+                className="bg-gray-100 p-4 rounded-xl active:bg-gray-200"
                 onPress={() =>
                   setQuantity(
                     Math.max(10, Number.parseInt(quantity) - 5).toString()
                   )
                 }
               >
-                <Ionicons
-                  name="remove"
-                  size={20}
-                  color={isReorder ? "#0369a1" : "#374151"}
-                />
+                <Ionicons name="remove" size={20} color="#374151" />
               </TouchableOpacity>
 
               <View className="flex-1 mx-4">
                 <TextInput
-                  className={`border-2 rounded-xl px-4 py-4 text-center text-xl font-bold text-gray-900 ${
-                    isReorder
-                      ? "border-blue-200 bg-blue-50"
-                      : "border-gray-200 bg-gray-50"
-                  }`}
+                  className="border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-xl font-bold text-gray-900 bg-gray-50"
                   value={quantity}
                   onChangeText={setQuantity}
                   keyboardType="numeric"
@@ -349,18 +243,12 @@ export default function OrderScreen({ navigation, route }: any) {
               </View>
 
               <TouchableOpacity
-                className={`p-4 rounded-xl ${
-                  isReorder ? "bg-blue-100" : "bg-gray-100"
-                } active:opacity-70`}
+                className="bg-gray-100 p-4 rounded-xl active:bg-gray-200"
                 onPress={() =>
                   setQuantity((Number.parseInt(quantity) + 5).toString())
                 }
               >
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color={isReorder ? "#0369a1" : "#374151"}
-                />
+                <Ionicons name="add" size={20} color="#374151" />
               </TouchableOpacity>
             </View>
 
@@ -375,69 +263,24 @@ export default function OrderScreen({ navigation, route }: any) {
 
           {/* Add visual cue to delivery address */}
           <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <Text
-              className={`text-xs text-gray-500 ${
-                isReorder ? "mb-[-10]" : "mb-[2px]"
-              } font-medium ml-8`}
-            >
-              For accurate delivery, always specify your exact building name
-            </Text>
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center">
-                <View
-                  className={`p-2 rounded-lg mr-3 ${
-                    isReorder ? "bg-green-100" : "bg-green-50"
-                  }`}
-                >
-                  <Ionicons
-                    name="location-outline"
-                    size={20}
-                    color={isReorder ? "#059669" : "#10b981"}
-                  />
+                <View className="bg-green-100 p-2 rounded-lg mr-3">
+                  <Ionicons name="location-outline" size={20} color="#10b981" />
                 </View>
                 <Text className="text-lg font-semibold text-gray-900">
                   Delivery Address
                 </Text>
               </View>
+              {isReorder && (
               <TouchableOpacity
-                className={`px-3 py-1 rounded-full flex-row items-center ${
-                  isReorder ? "bg-blue-100" : "bg-blue-50"
-                }`}
-                onPress={handleUpdateLocation}
+                onPress={getCurrentLocation}
+                className="bg-blue-50 p-2 rounded-lg"
               >
-                <Ionicons
-                  name="navigate"
-                  size={14}
-                  color={isReorder ? "#0284c7" : "#0ea5e9"}
-                />
-                <Text
-                  className={`text-xs font-medium ml-1 ${
-                    isReorder ? "text-blue-800" : "text-blue-700"
-                  }`}
-                >
-                  GET MY LOCATION
+                <Text className="text-blue-700 text-xs font-medium">
+                  UPDATE LOCATION
                 </Text>
               </TouchableOpacity>
-              {isReorder && (
-                <TouchableOpacity
-                  className="bg-blue-50 px-2 py-1 rounded-full flex-row items-center mt-14 ml-[-128]"
-                  onPress={handleUpdateLocation}
-                  disabled={isUpdatingLocation}
-                >
-                  {isUpdatingLocation ? (
-                    <ActivityIndicator size="small" color="#0ea5e9" />
-                  ) : (
-                    <Ionicons
-                      name="navigate"
-                      size={14}
-                      color="#0ea5e9"
-                      className="mr-1"
-                    />
-                  )}
-                  <Text className="text-blue-700 text-xs font-medium">
-                    {isUpdatingLocation ? "UPDATING..." : "UPDATE LOCATION"}
-                  </Text>
-                </TouchableOpacity>
               )}
             </View>
 
@@ -447,11 +290,7 @@ export default function OrderScreen({ navigation, route }: any) {
                   Residence Name *
                 </Text>
                 <TextInput
-                  className={`border-2 rounded-xl px-4 py-3 text-gray-900 ${
-                    isReorder
-                      ? "border-blue-200 bg-blue-50"
-                      : "border-gray-200 bg-gray-50"
-                  }`}
+                  className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 bg-gray-50"
                   placeholder="e.g., Falcon Court Apartments"
                   value={deliveryAddress.residenceName}
                   onChangeText={(text) =>
@@ -469,12 +308,8 @@ export default function OrderScreen({ navigation, route }: any) {
                     Floor *
                   </Text>
                   <TextInput
-                    className={`border-2 rounded-xl px-4 py-3 text-gray-900 ${
-                      isReorder
-                        ? "border-blue-200 bg-blue-50"
-                        : "border-gray-200 bg-gray-50"
-                    }`}
-                    placeholder="e.g., 1"
+                    className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 bg-gray-50"
+                    placeholder="Floor"
                     value={deliveryAddress.floorNumber}
                     onChangeText={(text) =>
                       setDeliveryAddress((prev) => ({
@@ -489,12 +324,8 @@ export default function OrderScreen({ navigation, route }: any) {
                     Door/Unit *
                   </Text>
                   <TextInput
-                    className={`border-2 rounded-xl px-4 py-3 text-gray-900 ${
-                      isReorder
-                        ? "border-blue-200 bg-blue-50"
-                        : "border-gray-200 bg-gray-50"
-                    }`}
-                    placeholder="e.g., 5"
+                    className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 bg-gray-50"
+                    placeholder="Door"
                     value={deliveryAddress.doorNumber}
                     onChangeText={(text) =>
                       setDeliveryAddress((prev) => ({
@@ -511,12 +342,8 @@ export default function OrderScreen({ navigation, route }: any) {
                   Special Instructions
                 </Text>
                 <TextInput
-                  className={`border-2 rounded-xl px-4 py-3 text-gray-900 ${
-                    isReorder
-                      ? "border-blue-200 bg-blue-50"
-                      : "border-gray-200 bg-gray-50"
-                  }`}
-                  placeholder="e.g., Call when arriving at gate"
+                  className="border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 bg-gray-50"
+                  placeholder="Any special delivery instructions..."
                   value={deliveryAddress.notes}
                   onChangeText={(text) =>
                     setDeliveryAddress((prev) => ({ ...prev, notes: text }))
